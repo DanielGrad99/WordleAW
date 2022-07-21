@@ -3,7 +3,16 @@
 #include <string>
 #include <unordered_set>
 
+#include "constants.h"
+
+#define TITLE_ROW 1
+
 #define FIRST_GUESS_ROW 3
+#define DIST_BETWEEN_ROWS 1
+#define DIST_BETWEEN_LETTERS 2
+
+#define MSG_ROW FIRST_GUESS_ROW + DIST_BETWEEN_ROWS * (MAX_NUM_GUESSES + 1)
+#define INPUT_ROW MSG_ROW + 1
 
 View::View(std::ostream& stream) :
     mAWView(),
@@ -24,7 +33,7 @@ void View::startLevel() {
     reset();
     switchToColour(View::Colour::RESET);
 
-    goToPos(1, 4);
+    goToPos(TITLE_ROW, 4);
     mStream << "Guess The Word!";
 
     std::vector<Letter> empty = {
@@ -35,17 +44,19 @@ void View::startLevel() {
         {'_', View::Colour::RESET}
     };
 
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < MAX_NUM_GUESSES; ++i) {
         setGuess(i, empty);
     }
 }
 
 void View::setGuess(int guessNumber, std::vector<Letter>& word) {
-    goToPos(3 + guessNumber, 8);
+    goToPos(FIRST_GUESS_ROW + guessNumber * DIST_BETWEEN_ROWS, 8);
 
     for (size_t i = 0; i < word.size(); ++i) {
         if (i != 0) {
-            mStream << " ";
+            for (int i = 1; i < DIST_BETWEEN_LETTERS; ++i) {
+                mStream << " ";
+            }
         }
 
         switchToColour(word[i].colour);
@@ -82,20 +93,20 @@ void View::setGuess(int guessNumber, std::vector<Letter>& word) {
 }
 
 void View::setMessage(std::string msg) {
-    goToPos(10, 1);
+    goToPos(MSG_ROW, 1);
     switchToColour(View::Colour::RESET);
     mStream << msg << "\033[K";
 }
 
 void View::askForNextWord() {
-    goToPos(11, 1);
+    goToPos(INPUT_ROW, 1);
     switchToColour(View::Colour::RESET);
     mStream << "Next Guess: " << "\033[J";
 }
 
 void View::askToPlayAgain(bool won) {
     mAWView.GameOver(won);
-    goToPos(11, 1);
+    goToPos(INPUT_ROW, 1);
     switchToColour(View::Colour::RESET);
     mStream << "Play Again? (y/n)" << "\033[J";
 }

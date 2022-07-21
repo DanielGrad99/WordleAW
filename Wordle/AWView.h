@@ -25,8 +25,6 @@ public:
 
 private:
 
-	void SetLightSafe(unsigned int index, PLFX_COLOR pcolour);
-
 	HINSTANCE mHLibrary;
 
 	LFX2INITIALIZE mInitFunction = nullptr;
@@ -46,7 +44,14 @@ private:
 
 	LFX2GETVERSION mVersionFunction = nullptr;
 
-	std::unordered_map<char, unsigned int> mLightIndex;
+
+	struct LightLoc {
+		unsigned int deviceIndex;
+		unsigned int lightIndex;
+	};
+	std::unordered_map<char, LightLoc> mLightIndex;
+
+	void SetLightSafe(LightLoc loghtLoc, PLFX_COLOR pcolour);
 
 public:
 

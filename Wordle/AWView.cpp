@@ -3,7 +3,8 @@
 AWView::AWView() :
 	mHLibrary(LoadLibrary(_T(LFX_DLL_NAME)))
 {
-	if (!mHLibrary) {
+	if (!mHLibrary)
+	{
 		return;
 	}
 
@@ -32,18 +33,26 @@ AWView::AWView() :
 	unsigned int descSize = 255;
 	char* description = new char[descSize];
 
-	unsigned int numLights;
-	mGetNumLightsFunction(1, &numLights);
+	unsigned int numDevices;
+	mGetNumDevicesFunction(&numDevices);
 
-	for (unsigned int lightIndex = 0; lightIndex < numLights; lightIndex++)
+	for (unsigned int deviceIndex = 0; deviceIndex < numDevices; ++deviceIndex)
 	{
-		result = mGetLightDescriptionFunction(1, lightIndex, description, descSize);
-		if (result != LFX_SUCCESS)
-			continue;
+		unsigned int numLights;
+		mGetNumLightsFunction(deviceIndex, &numLights);
 
-		if (description[0] >= 'A' && description[0] <= 'Z' && description[1] == '\0')
+		for (unsigned int lightIndex = 0; lightIndex < numLights; ++lightIndex)
 		{
-			mLightIndex[description[0]] = lightIndex;
+			result = mGetLightDescriptionFunction(1, lightIndex, description, descSize);
+			if (result != LFX_SUCCESS)
+			{
+				continue;
+			}
+
+			if (description[0] >= 'A' && description[0] <= 'Z' && description[1] == '\0')
+			{
+				mLightIndex[description[0]] = { deviceIndex, lightIndex };
+			}
 		}
 	}
 }
@@ -58,8 +67,7 @@ AWView::~AWView()
 
 void AWView::LightUpKey(unsigned char c, PLFX_COLOR pcolour)
 {
-	unsigned int index = mLightIndex[toupper(c)];
-	SetLightSafe(index, pcolour);
+	SetLightSafe(mLightIndex[toupper(c)], pcolour);
 }
 
 void AWView::NewGame()
@@ -75,23 +83,24 @@ void AWView::NewGame()
 
 void AWView::GameOver(bool won)
 {
-	// Maybe remove this later
-	return;
 
-	if (won) {
-		mLightFunction(LFX_DEVTYPE_KEYBOARD, LFX_GREEN);
-	}
-	else {
-		mLightFunction(LFX_DEVTYPE_KEYBOARD, LFX_RED);
-	}
+	const auto& colour = won ? LFX_GREEN : LFX_RED;
 
-	mUpdateFunction();
-	Sleep(5);
+	for (int i = 0; i < 3; ++i)
+	{
+		mLightFunction(LFX_DEVTYPE_KEYBOARD, colour);
+		mUpdateFunction();
+		Sleep(200);
+
+		mLightFunction(LFX_DEVTYPE_KEYBOARD, LFX_OFF);
+		mUpdateFunction();
+		Sleep(100);
+	}
 }
 
-void AWView::SetLightSafe(unsigned int index, PLFX_COLOR pcolour) {
+void AWView::SetLightSafe(LightLoc lightLoc, PLFX_COLOR pcolour) {
 
-	mSetLightColFunction(1, index, pcolour);
+	mSetLightColFunction(lightLoc.deviceIndex, lightLoc.lightIndex, pcolour);
 	mUpdateFunction();
 	Sleep(5);
 
